@@ -5,11 +5,12 @@ services:
   opal-server:
     image: permitio/opal-server:latest
     environment:
-      # Policy repository configuration - using local files
-      - OPAL_POLICY_REPO_URL=file:///app/policies
+      # Policy repository configuration - using GitHub with local policies  
+      - OPAL_POLICY_REPO_URL=https://github.com/plduser/opa-zero-poll-single-topic-multi-tenant.git
       - OPAL_POLICY_REPO_MAIN_BRANCH=main
       - OPAL_POLICY_REPO_POLLING_INTERVAL=30
       - OPAL_POLICY_REPO_SSH_KEY=""
+      - OPAL_POLICY_REPO_PATH=policies
       # Data sources configuration - using single topic approach
       - 'OPAL_DATA_CONFIG_SOURCES={"config": {"entries": []}}'
       # Server configuration
@@ -38,8 +39,14 @@ services:
       - OPAL_DATA_UPDATER_ENABLED=true
       - OPAL_DATA_TOPICS=tenant_data
       
+      # Data fetcher configuration
+      - OPAL_FETCH_WORKER_POOLS=1
+      - OPAL_FETCH_TIMEOUT=30
+      
       # Logging
-      - OPAL_LOG_LEVEL=INFO
+      - OPAL_LOG_LEVEL=DEBUG
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "7001:7001"
     depends_on:
