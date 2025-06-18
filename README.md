@@ -29,15 +29,27 @@ OPAL_DATA_TOPICS=tenant_1_data,tenant_2_data,tenant_3_data
 OPAL_DATA_TOPICS=tenant_data
 ```
 
-**Rozwiązanie:** Wykorzystujemy **hierarchię ścieżek w OPA** zamiast separacji na poziomie topics:
+**Rozwiązanie:** Wykorzystujemy **jeden topic + wiele dynamicznych data sources** z hierarchią ścieżek w OPA:
 
 1. **OPAL Client subskrybuje** jeden topic `tenant_data` podczas startu
-2. **Wszystkie eventy** dla wszystkich tenantów używają tego samego topic
-3. **Separacja tenantów** następuje przez `dst_path` w OPA:
-   - Tenant1: `/acl/tenant1`  
-   - Tenant2: `/acl/tenant2`
-   - Tenant3: `/acl/tenant3`
-4. **Nowy tenant:** po prostu nowy event na istniejący topic
+2. **Wszystkie eventy** dla wszystkich tenantów używają tego samego topic  
+3. **Każdy tenant = osobny data source** dynamicznie dodawany przez API:
+   ```bash
+   # Tenant1 data source
+   POST /data/config: {
+     "url": "http://api-provider:80/acl/tenant1",  # Unikalne URL
+     "topics": ["tenant_data"],                     # Ten sam topic
+     "dst_path": "/acl/tenant1"                     # Unikalna ścieżka OPA
+   }
+   
+   # Tenant2 data source  
+   POST /data/config: {
+     "url": "http://api-provider:80/acl/tenant2",  # Inne URL
+     "topics": ["tenant_data"],                     # Ten sam topic
+     "dst_path": "/acl/tenant2"                     # Inna ścieżka OPA
+   }
+   ```
+4. **Nowy tenant:** nowy data source na istniejący topic (bez restartu!)
 
 #### 🔍 Mechanizm techniczny
 
@@ -55,8 +67,12 @@ Nasze rozwiązanie (bez restartu):
 │   OPAL Server   │◄─────────────────────────────│   OPAL Client   │
 │                 │    (dla wszystkich)          │                 │
 │  Single Topic   │                              │ Single Subscribe │
+│  Multi Sources: │                              │ Multi Data Fetch │
+│  - /acl/tenant1 │                              │ - URL1→/acl/ten1 │
+│  - /acl/tenant2 │                              │ - URL2→/acl/ten2 │
+│  - /acl/tenant3 │                              │ - URL3→/acl/ten3 │
 └─────────────────┘                              └─────────────────┘
-                       ✅ Tenant separation przez OPA paths
+                       ✅ Jeden topic, wiele sources, różne ścieżki
 ```
 
 #### 📊 Izolacja danych
@@ -147,9 +163,9 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://host.docker.internal:8090/acl/tenant1",
-      "topics": ["tenant_data"],
-      "dst_path": "/acl/tenant1"
+      "url": "http://host.docker.internal:8090/acl/tenant1",  # Unikalne URL
+      "topics": ["tenant_data"],                               # Ten sam topic
+      "dst_path": "/acl/tenant1"                               # Unikalna ścieżka OPA
     }],
     "reason": "Load tenant1 data via single topic"
   }'
@@ -161,13 +177,18 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://host.docker.internal:8090/acl/tenant2", 
-      "topics": ["tenant_data"],
-      "dst_path": "/acl/tenant2"
+      "url": "http://host.docker.internal:8090/acl/tenant2",  # Inne URL
+      "topics": ["tenant_data"],                               # Ten sam topic  
+      "dst_path": "/acl/tenant2"                               # Inna ścieżka OPA
     }],
     "reason": "Load tenant2 data - NO RESTART NEEDED!"
   }'
 ```
+
+> **💡 Kluczowa obserwacja:** Każdy tenant ma:
+> - **Różne URL źródła danych** (`/acl/tenant1` vs `/acl/tenant2`)
+> - **Ten sam topic** (`tenant_data`)  
+> - **Różne ścieżki docelowe** w OPA (`/acl/tenant1` vs `/acl/tenant2`)
 
 #### Krok 3: Weryfikacja izolacji danych
 ```bash
