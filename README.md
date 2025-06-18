@@ -6,17 +6,74 @@ To repozytorium zawiera **przełomowe rozwiązanie** problemu wielodostępności
 
 ### 🎯 Kluczowe odkrycie
 
-**Tradycyjne podejście** wymaga restartu:
+#### 🚫 Dlaczego tradycyjne podejście wymaga restartu?
+
+**Tradycyjne podejście** - jeden topic na tenant:
 ```bash
 # ❌ Każdy tenant = osobny topic = restart wymagany
 OPAL_DATA_TOPICS=tenant_1_data,tenant_2_data,tenant_3_data
 ```
 
-**Nasze rozwiązanie** działa bez restartu:
+**Problem:** OPAL Client **subskrybuje topics podczas startu** i nie posiada mechanizmu dynamicznego dodawania nowych subskrypcji w runtime. To oznacza:
+
+1. **OPAL Client startuje** z listą topics z `OPAL_DATA_TOPICS`
+2. **Tworzy WebSocket connections** tylko dla tych topics
+3. **Nowy tenant = nowy topic** nie jest automatycznie subskrybowany
+4. **Jedyne rozwiązanie:** restart OPAL Client z rozszerzoną listą topics
+
+#### ✅ Dlaczego nasze podejście nie wymaga restartu?
+
+**Nasze odkrycie** - jeden topic dla wszystkich:
 ```bash
 # ✅ Jeden topic dla wszystkich tenantów = ZERO restartów!
 OPAL_DATA_TOPICS=tenant_data
 ```
+
+**Rozwiązanie:** Wykorzystujemy **hierarchię ścieżek w OPA** zamiast separacji na poziomie topics:
+
+1. **OPAL Client subskrybuje** jeden topic `tenant_data` podczas startu
+2. **Wszystkie eventy** dla wszystkich tenantów używają tego samego topic
+3. **Separacja tenantów** następuje przez `dst_path` w OPA:
+   - Tenant1: `/acl/tenant1`  
+   - Tenant2: `/acl/tenant2`
+   - Tenant3: `/acl/tenant3`
+4. **Nowy tenant:** po prostu nowy event na istniejący topic
+
+#### 🔍 Mechanizm techniczny
+
+```
+Tradycyjne (restart wymagany):
+┌─────────────────┐    topics: tenant_1_data     ┌─────────────────┐
+│   OPAL Server   │◄─────────────────────────────│   OPAL Client   │
+│                 │    topics: tenant_2_data     │                 │
+│  Multi Topics   │◄─────────────────────────────│  Multi Subscribe │
+└─────────────────┘    topics: tenant_3_data     └─────────────────┘
+                       ⚠️  Nowy topic = RESTART
+
+Nasze rozwiązanie (bez restartu):
+┌─────────────────┐    topic: tenant_data        ┌─────────────────┐
+│   OPAL Server   │◄─────────────────────────────│   OPAL Client   │
+│                 │    (dla wszystkich)          │                 │
+│  Single Topic   │                              │ Single Subscribe │
+└─────────────────┘                              └─────────────────┘
+                       ✅ Tenant separation przez OPA paths
+```
+
+#### 📊 Izolacja danych
+
+**Kluczowa obserwacja:** Izolacja tenantów **NIE musi** odbywać się na poziomie OPAL topics. OPA oferuje naturalną hierarchię ścieżek:
+
+```json
+{
+  "acl": {
+    "tenant1": { "users": [...], "resources": [...] },
+    "tenant2": { "users": [...], "resources": [...] },
+    "tenant3": { "users": [...], "resources": [...] }
+  }
+}
+```
+
+Każdy tenant ma własną przestrzeń w OPA, ale wszyscy używają tego samego mechanizmu dostarczania danych.
 
 ### 🏗️ Architektura
 
