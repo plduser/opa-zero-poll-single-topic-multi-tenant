@@ -37,19 +37,24 @@ OPAL_DATA_TOPICS=tenant_data
    ```bash
    # Tenant1 data source
    POST /data/config: {
-     "url": "http://simple-api-provider:80/acl/tenant1",  # Unikalne URL
-     "topics": ["tenant_data"],                           # Ten sam topic
-     "dst_path": "/acl/tenant1"                           # Unikalna ścieżka OPA
+     "url": "http://simple-api-provider:80/acl/tenant1",
+     "topics": ["tenant_data"],
+     "dst_path": "/acl/tenant1"
    }
    
    # Tenant2 data source  
    POST /data/config: {
-     "url": "http://simple-api-provider:80/acl/tenant2",  # Inne URL
-     "topics": ["tenant_data"],                           # Ten sam topic
-     "dst_path": "/acl/tenant2"                           # Inna ścieżka OPA
+     "url": "http://simple-api-provider:80/acl/tenant2",
+     "topics": ["tenant_data"],
+     "dst_path": "/acl/tenant2"
    }
    ```
 4. **Nowy tenant:** nowy data source na istniejący topic (bez restartu!)
+
+**Kluczowe różnice:**
+- `url`: Unikalne dla każdego tenanta (różne dane)
+- `topics`: Ten sam dla wszystkich (`["tenant_data"]`)  
+- `dst_path`: Unikalna ścieżka w OPA (izolacja)
 
 #### 🔍 Mechanizm techniczny
 
@@ -469,9 +474,9 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant1",      # Unikalne URL
-      "topics": ["tenant_data"],                               # Ten sam topic
-      "dst_path": "/acl/tenant1"                               # Unikalna ścieżka OPA
+      "url": "http://simple-api-provider:80/acl/tenant1",
+      "topics": ["tenant_data"],
+      "dst_path": "/acl/tenant1"
     }],
     "reason": "Load tenant1 data via single topic"
   }'
@@ -483,9 +488,9 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant2",      # Inne URL
-      "topics": ["tenant_data"],                               # Ten sam topic  
-      "dst_path": "/acl/tenant2"                               # Inna ścieżka OPA
+      "url": "http://simple-api-provider:80/acl/tenant2",
+      "topics": ["tenant_data"],
+      "dst_path": "/acl/tenant2"
     }],
     "reason": "Load tenant2 data - NO RESTART NEEDED!"
   }'
@@ -495,6 +500,8 @@ curl -X POST http://localhost:7002/data/config \
 > - **Różne URL źródła danych** (`/acl/tenant1` vs `/acl/tenant2`)
 > - **Ten sam topic** (`tenant_data`)  
 > - **Różne ścieżki docelowe** w OPA (`/acl/tenant1` vs `/acl/tenant2`)
+
+> **⚠️ Ważne:** JSON nie obsługuje komentarzy! Przykłady powyżej są **gotowe do skopiowania** bez modyfikacji.
 
 #### Krok 3: Weryfikacja izolacji danych
 ```bash
