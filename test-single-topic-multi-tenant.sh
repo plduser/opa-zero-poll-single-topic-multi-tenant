@@ -97,14 +97,14 @@ main() {
     
     # Step 1: Start services
     print_status "Step 1: Starting Docker services..."
-    docker-compose -f docker-compose.yml up -d
+    # docker-compose -f docker-compose.yml up -d
     
     # Step 2: Wait for services to be ready
     print_status "Step 2: Waiting for services to be ready..."
-    wait_for_service "http://localhost:7002/healthcheck" "OPAL Server" || exit 1
-    wait_for_service "http://localhost:7001/healthcheck" "OPAL Client" || exit 1
-    wait_for_service "http://localhost:8181/health" "OPA" || exit 1
-    wait_for_service "http://localhost:8090/acl/tenant1" "Simple API Provider" || exit 1
+    #wait_for_service "http://localhost:7002/healthcheck" "OPAL Server" || exit 1
+    #wait_for_service "http://localhost:7001/healthcheck" "OPAL Client" || exit 1
+    #wait_for_service "http://localhost:8181/health" "OPA" || exit 1
+    #wait_for_service "http://localhost:8090/acl/tenant1" "Simple API Provider" || exit 1
     
     # Step 3: Verify OPAL Client configuration
     print_status "Step 3: Verifying OPAL Client configuration..."
@@ -122,7 +122,7 @@ main() {
         -H "Content-Type: application/json" \
         -d '{
             "entries": [{
-                "url": "http://simple-api-provider:80/acl/tenant1",
+                "url": "http://localhost:8090/acl/tenant1",
                 "topics": ["tenant_data"],
                 "dst_path": "/acl/tenant1"
             }],
@@ -138,7 +138,7 @@ main() {
         -H "Content-Type: application/json" \
         -d '{
             "entries": [{
-                "url": "http://simple-api-provider:80/acl/tenant2",
+                "url": "http://localhost:8090/acl/tenant1",
                 "topics": ["tenant_data"],
                 "dst_path": "/acl/tenant2"
             }],
@@ -186,7 +186,7 @@ main() {
 # Cleanup function
 cleanup() {
     print_status "Cleaning up Docker services..."
-    docker-compose -f docker-compose.yml down --volumes --remove-orphans
+    # docker-compose -f docker-compose.yml down --volumes --remove-orphans
 }
 
 # Trap cleanup on script exit
