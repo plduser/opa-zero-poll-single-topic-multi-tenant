@@ -1,0 +1,46 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+
+# Editor directories and files
+.idea
+.vscode
+.cursor/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+
+# Task files and development tools
+tasks.json
+tasks/
+.taskmaster/
+.roo/
+.roomodes
+.windsurfrules
+
+# Local policy testing (use new-architecture/components/opa-standalone/policies)
+local-policies/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Database files
+*.db
+portal-integration/
+.opal-keys/

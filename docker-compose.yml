@@ -5,8 +5,9 @@ services:
   opal-server:
     image: permitio/opal-server:latest
     environment:
-      # Policy repository configuration
-      - OPAL_POLICY_REPO_URL=https://github.com/permitio/opal-example-policy-repo.git
+      # Policy repository configuration - using local files
+      - OPAL_POLICY_REPO_URL=file:///app/policies
+      - OPAL_POLICY_REPO_MAIN_BRANCH=main
       - OPAL_POLICY_REPO_POLLING_INTERVAL=30
       - OPAL_POLICY_REPO_SSH_KEY=""
       # Data sources configuration - using single topic approach
@@ -14,6 +15,8 @@ services:
       # Server configuration
       - OPAL_LOG_LEVEL=INFO
       - OPAL_SERVER_URL=http://opal-server:7002
+    volumes:
+      - ./policies:/app/policies:ro  
     ports:
       - "7002:7002"
     networks:
