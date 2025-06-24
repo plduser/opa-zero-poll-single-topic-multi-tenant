@@ -8,7 +8,7 @@
 
 ## 🚀 Revolutionary Multi-Tenancy Approach for OPAL
 
-This repository contains a **breakthrough solution** for multi-tenancy in OPAL that **eliminates the need for system restarts** when adding new tenants.
+This repository contains a **breakthrough solution** for multi-tenancy in OPAL designed for **high-scale SaaS applications** that **eliminates both the need for system restarts and the complexity of incremental updates (PATCH operations)** when adding new tenants.
 
 ### 🎯 Key Discovery
 

@@ -8,7 +8,7 @@
 
 ## 🚀 Rewolucyjne podejście do wielodostępności w OPAL
 
-To repozytorium zawiera **rozwiązanie** problemu wielodostępności (multi-tenancy) w OPAL, które eliminuje potrzebę restartowania systemu przy dodawaniu nowych tenantów.
+To repozytorium zawiera **rozwiązanie** problemu wielodostępności (multi-tenancy) w OPAL dla **wysokoskalowalnych aplikacji SaaS**, które eliminuje zarówno potrzebę restartowania systemu, jak i złożoność inkrementalnych aktualizacji (PATCH operations) przy dodawaniu nowych tenantów.
 
 ### 🎯 Kluczowe odkrycie
 
