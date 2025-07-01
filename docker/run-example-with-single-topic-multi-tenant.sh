@@ -152,7 +152,7 @@ main() {
         -H "Content-Type: application/json" \
         -d '{
             "entries": [{
-                "url": "http://example_external_data_provider:80/acl/tenant1",
+                "url": "http://example_external_data_provider:80/acl/tenant2",
                 "topics": ["tenant_data"],
                 "dst_path": "/acl/tenant2"
             }],

@@ -57,14 +57,14 @@ OPAL_DATA_TOPICS=tenant_data
    ```bash
    # Tenant1 data source
    POST /data/config: {
-     "url": "http://example-external-data-provider:80/acl/tenant1",
+     "url": "http://example_external_data_provider:80/acl/tenant1",
      "topics": ["tenant_data"],
      "dst_path": "/acl/tenant1"
    }
    
    # Tenant2 data source  
    POST /data/config: {
-     "url": "http://example-external-data-provider:80/acl/tenant2",
+     "url": "http://example_external_data_provider:80/acl/tenant2",
      "topics": ["tenant_data"],
      "dst_path": "/acl/tenant2"
    }
@@ -140,7 +140,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://example-external-data-provider:80/acl/tenant1",
+      "url": "http://example_external_data_provider:80/acl/tenant1",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant1"
     }]
@@ -151,7 +151,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://example-external-data-provider:80/acl/tenant2", 
+      "url": "http://example_external_data_provider:80/acl/tenant2", 
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }]
@@ -424,7 +424,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://example-external-data-provider:80/acl/tenant1",
+      "url": "http://example_external_data_provider:80/acl/tenant1",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant1"
     }],
@@ -438,7 +438,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://example-external-data-provider:80/acl/tenant2",
+      "url": "http://example_external_data_provider:80/acl/tenant2",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }],
@@ -503,16 +503,16 @@ The solution uses:
 ```bash
 # ❌ Wrong: JSON doesn't support comments
 curl -X POST http://localhost:7002/data/config \
-  -d '{"url": "http://example-external-data-provider:80/acl/tenant2"}' # Comment causes error!
+  -d '{"url": "http://example_external_data_provider:80/acl/tenant2"}' # Comment causes error!
 
 # ✅ Correct: Pure JSON without comments  
 curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
-  -d '{"entries": [{"url": "http://example-external-data-provider:80/acl/tenant2", "topics": ["tenant_data"], "dst_path": "/acl/tenant2"}]}'
+  -d '{"entries": [{"url": "http://example_external_data_provider:80/acl/tenant2", "topics": ["tenant_data"], "dst_path": "/acl/tenant2"}]}'
 ```
 
 **Important:**
-- Always use `http://example-external-data-provider:80` for container-to-container communication
+- Always use `http://example_external_data_provider:80` for container-to-container communication
 - Never use `http://host.docker.internal:8090` - doesn't work with OPAL Client  
 - Always add `Content-Type: application/json` header
 

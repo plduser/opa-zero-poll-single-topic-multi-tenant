@@ -43,14 +43,14 @@ OPAL_DATA_TOPICS=tenant_data
    ```bash
    # Tenant1 data source
    POST /data/config: {
-     "url": "http://example-external-data-provider:80/acl/tenant1",
+     "url": "http://example_external_data_provider:80/acl/tenant1",
      "topics": ["tenant_data"],
      "dst_path": "/acl/tenant1"
    }
    
    # Tenant2 data source  
    POST /data/config: {
-     "url": "http://example-external-data-provider:80/acl/tenant2",
+     "url": "http://example_external_data_provider:80/acl/tenant2",
      "topics": ["tenant_data"],
      "dst_path": "/acl/tenant2"
    }
@@ -485,7 +485,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://example-external-data-provider:80/acl/tenant1",
+      "url": "http://example_external_data_provider:80/acl/tenant1",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant1"
     }],
@@ -499,7 +499,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://example-external-data-provider:80/acl/tenant2",
+      "url": "http://example_external_data_provider:80/acl/tenant2",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }],
@@ -599,7 +599,7 @@ environment:
 curl -X POST http://localhost:7002/data/config \
   -d '{
     "entries": [{
-      "url": "http://example-external-data-provider:80/acl/tenant2",  # Komentarz powoduje błąd!
+      "url": "http://example_external_data_provider:80/acl/tenant2",  # Komentarz powoduje błąd!
       "topics": ["tenant_data"]
     }]
   }'
@@ -609,7 +609,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://example-external-data-provider:80/acl/tenant2",
+      "url": "http://example_external_data_provider:80/acl/tenant2",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }],
@@ -618,7 +618,7 @@ curl -X POST http://localhost:7002/data/config \
 ```
 
 **Ważne:** 
-- **Zawsze używaj** `http://example-external-data-provider:80` dla komunikacji między kontenerami
+- **Zawsze używaj** `http://example_external_data_provider:80` dla komunikacji między kontenerami
 - **Nigdy nie używaj** `http://host.docker.internal:8090` - to nie działa z OPAL Client
 - **Zawsze dodawaj** nagłówek `Content-Type: application/json`
 
