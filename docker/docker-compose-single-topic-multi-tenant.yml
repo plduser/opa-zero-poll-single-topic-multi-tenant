@@ -26,14 +26,15 @@ services:
       # number of uvicorn workers to run inside the opal-server container
       - UVICORN_NUM_WORKERS=4
       
-      # Policy repository configuration - using GitHub with local policies  
-      # - the repo we pass in this example demonstrates single-topic multi-tenant approach
-      # - for more info, see: https://docs.opal.ac/tutorials/track_a_git_repo
+      # Policy repository configuration - using GitHub for reliable policy sync
+      # This is the RECOMMENDED approach for OPAL demonstrations as it ensures:
+      # - Reliable policy loading and sync mechanism
+      # - Real-time policy updates via OPAL's designed workflow  
+      # - Consistent behavior across different environments
+      # The repo demonstrates single-topic multi-tenant approach
       - OPAL_POLICY_REPO_URL=https://github.com/plduser/opa-zero-poll-single-topic-multi-tenant.git
       - OPAL_POLICY_REPO_MAIN_BRANCH=main
-      # in this example we will use a polling interval of 30 seconds to check for new policy updates (git commits affecting the rego policy).
-      # however, it is better to utilize a git *webhook* to trigger the server to check for changes only when the repo has new commits.
-      # for more info see: https://docs.opal.ac/tutorials/track_a_git_repo
+      # Polling interval for policy updates (30 seconds for demo, use webhooks in production)
       - OPAL_POLICY_REPO_POLLING_INTERVAL=30
       - OPAL_POLICY_REPO_SSH_KEY=""
       - OPAL_POLICY_REPO_PATH=docker/docker_files/policies
@@ -47,9 +48,8 @@ services:
       - OPAL_LOG_LEVEL=INFO
       - OPAL_SERVER_URL=http://opal_server:7002
       - OPAL_LOG_FORMAT_INCLUDE_PID=true
-    volumes:
-      # Mount local policies directory for development
-      - ./docker_files/policies:/app/policies:ro  
+    # Note: No volume mount needed - policies are loaded from GitHub repo
+    # OPAL will clone the repo and sync policies automatically  
     ports:
       # exposes opal server on the host machine, you can access the server at: http://localhost:7002
       - "7002:7002"
@@ -237,4 +237,9 @@ services:
 #
 # Revolutionary Architecture:
 # Traditional: N tenants = N topics = restart required
-# Our approach: N tenants = 1 topic + N data sources = NO restart! 
+# Our approach: N tenants = 1 topic + N data sources = NO restart!
+#
+# Demo Architecture:
+# - Policies loaded from GitHub repo (demonstrates OPAL's designed workflow)
+# - All data served by local nginx container (no external APIs beyond repo)
+# - Reliable operation with standard OPAL policy sync mechanism 

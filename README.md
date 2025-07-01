@@ -391,15 +391,12 @@ environment:
 ├── docker/                         # OPAL docker configurations
 │   ├── docker-compose-single-topic-multi-tenant.yml  # Complete configuration
 │   ├── docker_files/               # Supporting files
-│   │   ├── policies/               # Rego policies with new 'if' syntax
-│   │   │   ├── access.rego         # Access control
-│   │   │   ├── roles.rego          # Role management  
-│   │   │   └── allow.rego          # Authorization rules
 │   │   └── example-external-data-provider/  # Mock API for tenant data
-│   │       ├── nginx.conf          # Nginx configuration
-│   │       └── acl/                # Tenant data files
+│   │       └── nginx.conf          # Nginx configuration with hardcoded JSON data
 │   └── run-example-with-single-topic-multi-tenant.sh  # Test script
 └── README.md                       # This documentation
+
+Note: Policies are loaded by OPAL from GitHub repo at runtime.
 ```
 
 ### 🚀 Step-by-Step Tutorial

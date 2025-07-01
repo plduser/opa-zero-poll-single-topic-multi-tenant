@@ -442,15 +442,12 @@ Jeśli PATCH fails → Determine failed operations → Rebuild state
 ├── docker/                         # Konfiguracje OPAL docker
 │   ├── docker-compose-single-topic-multi-tenant.yml  # Kompletna konfiguracja
 │   ├── docker_files/               # Pliki wspierające
-│   │   ├── policies/               # Polityki rego z nową składnią 'if'
-│   │   │   ├── access.rego         # Kontrola dostępu
-│   │   │   ├── roles.rego          # Zarządzanie rolami  
-│   │   │   └── allow.rego          # Reguły autoryzacji
 │   │   └── example-external-data-provider/  # Mock API dla danych tenantów
-│   │       ├── nginx.conf          # Konfiguracja nginx
-│   │       └── acl/                # Pliki danych tenantów
+│   │       └── nginx.conf          # Konfiguracja nginx z hardcoded danymi JSON
 │   └── run-example-with-single-topic-multi-tenant.sh  # Skrypt testowy
 └── README.md                       # Ta dokumentacja
+
+Uwaga: Polityki są ładowane przez OPAL z repo GitHub w runtime.
 ```
 
 ## 🚀 Tutorial Krok po Kroku
