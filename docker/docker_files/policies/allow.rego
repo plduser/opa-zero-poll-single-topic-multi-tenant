@@ -7,12 +7,10 @@ default allow := false
 
 allow if {
   user := input.user
-  app := input.app
-  tenant := input.tenant_id
-  company := input.company_id
   action := input.action
+  resource := input.resource
+  tenant := input.tenant_id
 
   access.has_tenant_access(user, tenant)
-  access.has_company_access(user, tenant, company)
-  roles.has_permission(user, app, action)
+  roles.has_permission(user, action)
 }

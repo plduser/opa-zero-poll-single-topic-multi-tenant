@@ -57,14 +57,14 @@ OPAL_DATA_TOPICS=tenant_data
    ```bash
    # Tenant1 data source
    POST /data/config: {
-     "url": "http://simple-api-provider:80/acl/tenant1",
+     "url": "http://example-external-data-provider:80/acl/tenant1",
      "topics": ["tenant_data"],
      "dst_path": "/acl/tenant1"
    }
    
    # Tenant2 data source  
    POST /data/config: {
-     "url": "http://simple-api-provider:80/acl/tenant2",
+     "url": "http://example-external-data-provider:80/acl/tenant2",
      "topics": ["tenant_data"],
      "dst_path": "/acl/tenant2"
    }
@@ -128,8 +128,8 @@ Each tenant has its own space in OPA, but all use the same data delivery mechani
          ▲                       ▲             └─────────────────┘
          │                       │
          │              ┌─────────────────┐
-         └──────────────►│ Simple API      │
-                         │ Provider        │
+         └──────────────►│ Example External│
+                         │ Data Provider   │
                          │ (nginx)         │
                          └─────────────────┘
 ```
@@ -140,7 +140,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant1",
+      "url": "http://example-external-data-provider:80/acl/tenant1",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant1"
     }]
@@ -151,7 +151,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant2", 
+      "url": "http://example-external-data-provider:80/acl/tenant2", 
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }]
@@ -173,8 +173,9 @@ curl -X POST http://localhost:7002/data/config \
 git clone https://github.com/plduser/opa-zero-poll-single-topic-multi-tenant.git
 cd opa-zero-poll-single-topic-multi-tenant
 
-# Start all services
-docker-compose up -d
+# Navigate to docker directory and start all services
+cd docker
+docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
 
 # Verify health
 curl http://localhost:8181/health        # OPA health
@@ -364,13 +365,14 @@ If PATCH fails → Determine failed operations → Rebuild state
 Run the included automated test:
 
 ```bash
-chmod +x test-single-topic-multi-tenant.sh
-./test-single-topic-multi-tenant.sh
+cd docker
+chmod +x run-example-with-single-topic-multi-tenant.sh
+./run-example-with-single-topic-multi-tenant.sh
 ```
 
 ### 🔧 Configuration
 
-#### Key Parameters in docker-compose.yml:
+#### Key Parameters in docker/docker-compose-single-topic-multi-tenant.yml:
 
 ```yaml
 # OPAL Client - revolutionary single topic configuration
@@ -386,12 +388,12 @@ environment:
 {
   "acl": {
     "tenant1": {
-      "users": [{"name": "alice", "role": "admin"}],
-      "resources": [{"name": "document1", "owner": "alice"}]
+      "users": [{"name": "alice", "role": "admin"}, {"name": "bob", "role": "user"}],
+      "resources": [{"name": "document1", "owner": "alice"}, {"name": "document2", "owner": "bob"}]
     },
     "tenant2": {
-      "users": [{"name": "charlie", "role": "manager"}], 
-      "resources": [{"name": "file1", "owner": "charlie"}]
+      "users": [{"name": "charlie", "role": "manager"}, {"name": "diana", "role": "user"}], 
+      "resources": [{"name": "file1", "owner": "charlie"}, {"name": "file2", "owner": "diana"}]
     }
   }
 }
@@ -400,14 +402,18 @@ environment:
 ### 📁 Repository Contents
 
 ```
-├── docker-compose.yml              # Complete OPAL configuration
-├── policies/                       # Rego policies with new 'if' syntax
-│   ├── access.rego                 # Access control
-│   ├── roles.rego                  # Role management  
-│   └── allow.rego                  # Authorization rules
-├── simple-api-provider/            # Mock API for tenant data
-│   └── nginx.conf                  # Nginx configuration
-└── test-single-topic-multi-tenant.sh  # Test script
+├── docker/                         # OPAL docker configurations
+│   ├── docker-compose-single-topic-multi-tenant.yml  # Complete configuration
+│   ├── docker_files/               # Supporting files
+│   │   ├── policies/               # Rego policies with new 'if' syntax
+│   │   │   ├── access.rego         # Access control
+│   │   │   ├── roles.rego          # Role management  
+│   │   │   └── allow.rego          # Authorization rules
+│   │   └── example-external-data-provider/  # Mock API for tenant data
+│   │       ├── nginx.conf          # Nginx configuration
+│   │       └── acl/                # Tenant data files
+│   └── run-example-with-single-topic-multi-tenant.sh  # Test script
+└── README.md                       # This documentation
 ```
 
 ### 📚 Complete Usage Examples
@@ -418,7 +424,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant1",
+      "url": "http://example-external-data-provider:80/acl/tenant1",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant1"
     }],
@@ -432,7 +438,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant2",
+      "url": "http://example-external-data-provider:80/acl/tenant2",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }],
@@ -462,7 +468,7 @@ curl http://localhost:8181/v1/data/acl | jq .
 #### Step 4: Test Policies with New Syntax
 
 ```bash
-# Test RBAC authorization
+# Test tenant-based RBAC authorization
 curl -X POST http://localhost:8181/v1/data/policies/rbac/allow \
   -H "Content-Type: application/json" \
   -d '{
@@ -481,7 +487,7 @@ The solution uses:
 - **OPAL Server** (port 7002) - Central policy/data management
 - **OPAL Client** (port 7001) - Fetches and updates OPA
 - **OPA** (ports 8181, 8282) - Policy engine with modern Rego policies
-- **Simple API Provider** (port 8090) - Mock tenant data endpoints
+- **Example External Data Provider** (port 8090) - Mock tenant data endpoints
 
 ### 📋 Requirements
 
@@ -497,27 +503,30 @@ The solution uses:
 ```bash
 # ❌ Wrong: JSON doesn't support comments
 curl -X POST http://localhost:7002/data/config \
-  -d '{"url": "http://simple-api-provider:80/acl/tenant2"}' # Comment causes error!
+  -d '{"url": "http://example-external-data-provider:80/acl/tenant2"}' # Comment causes error!
 
 # ✅ Correct: Pure JSON without comments  
 curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
-  -d '{"entries": [{"url": "http://simple-api-provider:80/acl/tenant2", "topics": ["tenant_data"], "dst_path": "/acl/tenant2"}]}'
+  -d '{"entries": [{"url": "http://example-external-data-provider:80/acl/tenant2", "topics": ["tenant_data"], "dst_path": "/acl/tenant2"}]}'
 ```
 
 **Important:**
-- Always use `http://simple-api-provider:80` for container-to-container communication
+- Always use `http://example-external-data-provider:80` for container-to-container communication
 - Never use `http://host.docker.internal:8090` - doesn't work with OPAL Client  
 - Always add `Content-Type: application/json` header
 
 #### **Container Startup Issues**
 ```bash
+# Navigate to docker directory first
+cd docker
+
 # Check logs
-docker-compose logs opal-server
-docker-compose logs opal-client
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_server
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_client
 
 # Restart system
-docker-compose down && docker-compose up -d
+docker compose -f docker-compose-single-topic-multi-tenant.yml down && docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
 ```
 
 #### **Data Not Loading to OPA**
