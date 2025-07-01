@@ -27,7 +27,6 @@ services:
       - UVICORN_NUM_WORKERS=4
       
       # Policy repository configuration - using GitHub with local policies  
-      # - if this repo is not public, you can pass an ssh key via `OPAL_POLICY_REPO_SSH_KEY`)
       # - the repo we pass in this example demonstrates single-topic multi-tenant approach
       # - for more info, see: https://docs.opal.ac/tutorials/track_a_git_repo
       - OPAL_POLICY_REPO_URL=https://github.com/plduser/opa-zero-poll-single-topic-multi-tenant.git
