@@ -43,14 +43,14 @@ OPAL_DATA_TOPICS=tenant_data
    ```bash
    # Tenant1 data source
    POST /data/config: {
-     "url": "http://simple-api-provider:80/acl/tenant1",
+     "url": "http://example-external-data-provider:80/acl/tenant1",
      "topics": ["tenant_data"],
      "dst_path": "/acl/tenant1"
    }
    
    # Tenant2 data source  
    POST /data/config: {
-     "url": "http://simple-api-provider:80/acl/tenant2",
+     "url": "http://example-external-data-provider:80/acl/tenant2",
      "topics": ["tenant_data"],
      "dst_path": "/acl/tenant2"
    }
@@ -114,8 +114,8 @@ Każdy tenant ma własną przestrzeń w OPA, ale wszyscy używają tego samego m
          ▲                       ▲             └─────────────────┘
          │                       │
          │              ┌─────────────────┐
-         └──────────────►│ Simple API      │
-                         │ Provider        │
+         └──────────────►│ Example External│
+                         │ Data Provider   │
                          │ (nginx)         │
                          └─────────────────┘
 ```
@@ -437,14 +437,18 @@ Jeśli PATCH fails → Determine failed operations → Rebuild state
 ### 📁 Zawartość repozytorium
 
 ```
-├── docker-compose.yml              # Kompletna konfiguracja OPAL
-├── policies/                       # Polityki rego z nową składnią 'if'
-│   ├── access.rego                 # Kontrola dostępu
-│   ├── roles.rego                  # Zarządzanie rolami  
-│   └── allow.rego                  # Reguły autoryzacji
-├── simple-api-provider/            # Mock API dla danych tenantów
-│   └── nginx.conf                  # Konfiguracja nginx
-└── test-single-topic-multi-tenant.sh  # Skrypt testowy
+├── docker/                         # Konfiguracje OPAL docker
+│   ├── docker-compose-single-topic-multi-tenant.yml  # Kompletna konfiguracja
+│   ├── docker_files/               # Pliki wspierające
+│   │   ├── policies/               # Polityki rego z nową składnią 'if'
+│   │   │   ├── access.rego         # Kontrola dostępu
+│   │   │   ├── roles.rego          # Zarządzanie rolami  
+│   │   │   └── allow.rego          # Reguły autoryzacji
+│   │   └── example-external-data-provider/  # Mock API dla danych tenantów
+│   │       ├── nginx.conf          # Konfiguracja nginx
+│   │       └── acl/                # Pliki danych tenantów
+│   └── run-example-with-single-topic-multi-tenant.sh  # Skrypt testowy
+└── README.md                       # Ta dokumentacja
 ```
 
 ## 🚀 Szybki start
@@ -456,11 +460,12 @@ Jeśli PATCH fails → Determine failed operations → Rebuild state
 git clone https://github.com/plduser/opa-zero-poll-single-topic-multi-tenant.git
 cd opa-zero-poll-single-topic-multi-tenant
 
-# Uruchomienie wszystkich usług
-docker-compose up -d
+# Przejście do katalogu docker i uruchomienie wszystkich usług
+cd docker
+docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
 
 # Sprawdzenie statusu (wszystkie kontenery powinny być 'running')
-docker-compose ps
+docker compose -f docker-compose-single-topic-multi-tenant.yml ps
 ```
 
 ### 2. Weryfikacja działania
@@ -480,7 +485,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant1",
+      "url": "http://example-external-data-provider:80/acl/tenant1",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant1"
     }],
@@ -494,7 +499,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant2",
+      "url": "http://example-external-data-provider:80/acl/tenant2",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }],
@@ -524,7 +529,7 @@ curl http://localhost:8181/v1/data/acl | jq .
 ### 4. Test polityk z nową składnią
 
 ```bash
-# Test autoryzacji RBAC
+# Test autoryzacji RBAC opartej na tenantach
 curl -X POST http://localhost:8181/v1/data/policies/rbac/allow \
   -H "Content-Type: application/json" \
   -d '{
@@ -542,13 +547,14 @@ curl -X POST http://localhost:8181/v1/data/policies/rbac/allow \
 Użyj dołączonego skryptu do pełnego testu:
 
 ```bash
-chmod +x test-single-topic-multi-tenant.sh
-./test-single-topic-multi-tenant.sh
+cd docker
+chmod +x run-example-with-single-topic-multi-tenant.sh
+./run-example-with-single-topic-multi-tenant.sh
 ```
 
 ## 🔧 Konfiguracja
 
-### Kluczowe parametry w docker-compose.yml:
+### Kluczowe parametry w docker/docker-compose-single-topic-multi-tenant.yml:
 
 ```yaml
 # OPAL Client - rewolucyjna konfiguracja single topic
@@ -564,12 +570,12 @@ environment:
 {
   "acl": {
     "tenant1": {
-      "users": [{"name": "alice", "role": "admin"}],
-      "resources": [{"name": "document1", "owner": "alice"}]
+      "users": [{"name": "alice", "role": "admin"}, {"name": "bob", "role": "user"}],
+      "resources": [{"name": "document1", "owner": "alice"}, {"name": "document2", "owner": "bob"}]
     },
     "tenant2": {
-      "users": [{"name": "charlie", "role": "manager"}], 
-      "resources": [{"name": "file1", "owner": "charlie"}]
+      "users": [{"name": "charlie", "role": "manager"}, {"name": "diana", "role": "user"}], 
+      "resources": [{"name": "file1", "owner": "charlie"}, {"name": "file2", "owner": "diana"}]
     }
   }
 }
@@ -593,7 +599,7 @@ environment:
 curl -X POST http://localhost:7002/data/config \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant2",  # Komentarz powoduje błąd!
+      "url": "http://example-external-data-provider:80/acl/tenant2",  # Komentarz powoduje błąd!
       "topics": ["tenant_data"]
     }]
   }'
@@ -603,7 +609,7 @@ curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
     "entries": [{
-      "url": "http://simple-api-provider:80/acl/tenant2",
+      "url": "http://example-external-data-provider:80/acl/tenant2",
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }],
@@ -612,18 +618,21 @@ curl -X POST http://localhost:7002/data/config \
 ```
 
 **Ważne:** 
-- **Zawsze używaj** `http://simple-api-provider:80` dla komunikacji między kontenerami
+- **Zawsze używaj** `http://example-external-data-provider:80` dla komunikacji między kontenerami
 - **Nigdy nie używaj** `http://host.docker.internal:8090` - to nie działa z OPAL Client
 - **Zawsze dodawaj** nagłówek `Content-Type: application/json`
 
 ### Problem: Kontenery nie startują
 ```bash
+# Przejdź do katalogu docker
+cd docker
+
 # Sprawdź logi
-docker-compose logs opal-server
-docker-compose logs opal-client
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_server
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_client
 
 # Restart systemu
-docker-compose down && docker-compose up -d
+docker compose -f docker-compose-single-topic-multi-tenant.yml down && docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
 ```
 
 ### Problem: Dane nie ładują się do OPA
@@ -664,4 +673,13 @@ MIT License - zobacz [LICENSE](LICENSE) dla szczegółów.
 
 ---
 
-**🌟 Jeśli to rozwiązanie rozwiązuje Twój problem z multi-tenancy w OPAL, rozważ contribution do głównego projektu OPAL!** 
+**🌟 Jeśli to rozwiązanie rozwiązuje Twój problem z multi-tenancy w OPAL, rozważ wspieranie pull request do głównego projektu OPAL!**
+
+## 📖 Dokumentacja w innych językach
+
+- **🇵🇱 Polish (Polski)**: Ten plik - Kompletna dokumentacja w języku polskim
+- **🇺🇸 English**: [README.md](README.md) - Kompletna dokumentacja w języku angielskim
+
+---
+
+*To repozytorium demonstruje działający wzorzec OPAL umożliwiający zarządzanie danymi multi-tenant BEZ restartów przy dodawaniu nowych tenant-ów.* 

@@ -559,7 +559,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**🌟 If this solution solves your multi-tenancy problem in OPAL, consider contributing to the main OPAL project!**
+**🌟 If this solution solves your multi-tenancy problem in OPAL, consider supporting pull request to the main OPAL project!**
 
 ## 📖 Documentation in Other Languages
 
