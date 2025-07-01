@@ -161,27 +161,13 @@ curl -X POST http://localhost:7002/data/config \
 ### 🎁 Benefits
 
 - **🔄 Zero Downtime**: Add tenants without restarts
+- **⚡ Zero Downtime Updates**: Update tenant data without restarts
 - **📈 Linear Scalability**: One topic handles N tenants
 - **🛡️ Full Isolation**: Tenant data remains separated  
 - **⚡ Performance**: No overhead from multiple topics
 - **🧩 Simplicity**: Streamlined configuration
+- **🔄 Real-time Sync**: Instant data propagation
 
-### 🚀 Quick Start
-
-```bash
-# Clone repository
-git clone https://github.com/plduser/opa-zero-poll-single-topic-multi-tenant.git
-cd opa-zero-poll-single-topic-multi-tenant
-
-# Navigate to docker directory and start all services
-cd docker
-docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
-
-# Verify health
-curl http://localhost:8181/health        # OPA health
-curl http://localhost:7002/healthcheck   # OPAL Server health
-curl http://localhost:8090/acl/tenant1   # API Provider
-```
 
 ### 📊 Performance Comparison
 
@@ -382,7 +368,7 @@ environment:
   - OPAL_FETCH_TIMEOUT=30
 ```
 
-#### Data Structure in OPA:
+#### Final Data Structure in OPA:
 
 ```json
 {
@@ -416,10 +402,63 @@ environment:
 └── README.md                       # This documentation
 ```
 
-### 📚 Complete Usage Examples
+### 🚀 Step-by-Step Tutorial
 
-#### Step 1: Add First Tenant
+This detailed tutorial demonstrates the revolutionary single-topic multi-tenant approach step by step, showing exactly what happens in the system when adding tenants.
+
+#### Prerequisites
+
 ```bash
+# Clone repository
+git clone https://github.com/plduser/opa-zero-poll-single-topic-multi-tenant.git
+cd opa-zero-poll-single-topic-multi-tenant
+cd docker
+```
+
+---
+
+### **Step 1: Start All Services**
+
+```bash
+# Start all containers
+docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
+
+# Wait for services to be ready (30-60 seconds)
+sleep 10
+
+# Verify all services are healthy
+curl http://localhost:8181/health        # OPA health
+curl http://localhost:7002/healthcheck   # OPAL Server health  
+curl http://localhost:8090/acl/tenant1   # External Data Provider health
+```
+
+**Expected Output:**
+- OPA: `{}`
+- OPAL Server: `{"status":"ok"}`  
+- Data Provider: `{"users": [{"name": "alice", "role": "admin"}, ...]}`
+
+---
+
+### **Step 2: Verify OPA is Empty (No Tenant Data)**
+
+```bash
+# Check if OPA has any tenant data - should be empty
+curl http://localhost:8181/v1/data/acl | jq .
+```
+
+**Expected Output:**
+```json
+{}
+```
+
+🎯 **This proves no tenant data is loaded initially** - perfect starting point!
+
+---
+
+### **Step 3: Register First Data Source (Tenant1)**
+
+```bash
+# Add tenant1 data source via single topic
 curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
@@ -428,12 +467,86 @@ curl -X POST http://localhost:7002/data/config \
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant1"
     }],
-    "reason": "Load tenant1 data via single topic"
+    "reason": "Load tenant1 data via single topic - DEMO"
   }'
 ```
 
-#### Step 2: Add Second Tenant **WITHOUT RESTART**
+**Expected Output:**
+```json
+{"status":"ok"}
+```
+
+---
+
+### **Step 4: Monitor OPAL Server Logs (Data Publishing)**
+
 ```bash
+# Check OPAL Server logs to see data publishing activity
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_server --since=1m | grep -E "(Publishing|Broadcasting)"
+```
+
+**Expected Output (Key Lines):**
+```
+opal_server | Publishing data update to topics: {'tenant_data'}, reason: Load tenant1 data via single topic - DEMO
+opal_server | Broadcasting incoming event: {'topic': 'tenant_data', 'notifier_id': '...'}
+```
+
+🎯 **This shows OPAL Server successfully published to the single topic `tenant_data`**
+
+---
+
+### **Step 5: Monitor OPAL Client Logs (Data Fetching)**
+
+```bash
+# Check OPAL Client logs to see data fetching and processing
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_client --since=1m | grep -E "(Received|Fetching|Updating|success|Failed)"
+```
+
+**Expected Output (Key Lines):**
+```
+opal_client | Received event on topic: tenant_data
+opal_client | Fetching data from: http://example_external_data_provider:80/acl/tenant1
+opal_client | Updating OPA with data at path: /acl/tenant1
+opal_client | processing store transaction: {'success': True, ...}
+```
+
+🎯 **This proves OPAL Client successfully fetched and loaded tenant1 data**
+
+---
+
+### **Step 6: Verify Tenant1 Data in OPA**
+
+```bash
+# Check if tenant1 data was loaded into OPA
+curl http://localhost:8181/v1/data/acl | jq .
+```
+
+**Expected Output:**
+```json
+{
+  "result": {
+    "tenant1": {
+      "users": [
+        {"name": "alice", "role": "admin"},
+        {"name": "bob", "role": "user"}
+      ],
+      "resources": [
+        {"name": "document1", "owner": "alice"},
+        {"name": "document2", "owner": "bob"}
+      ]
+    }
+  }
+}
+```
+
+🎯 **SUCCESS! Tenant1 data is now loaded via single topic approach**
+
+---
+
+### **Step 7: Add Second Tenant (NO RESTART NEEDED!)**
+
+```bash
+# Add tenant2 data source - using the SAME topic 'tenant_data'
 curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
   -d '{
@@ -442,33 +555,69 @@ curl -X POST http://localhost:7002/data/config \
       "topics": ["tenant_data"],
       "dst_path": "/acl/tenant2"
     }],
-    "reason": "Load tenant2 data - NO RESTART NEEDED!"
+    "reason": "Load tenant2 data via single topic - NO RESTART!"
   }'
 ```
 
-> **💡 Key Observation:** Each tenant has:
-> - **Different source URL** (`/acl/tenant1` vs `/acl/tenant2`)
-> - **Same topic** (`tenant_data`)  
-> - **Different destination paths** in OPA (`/acl/tenant1` vs `/acl/tenant2`)
+**Expected Output:**
+```json
+{"status":"ok"}
+```
 
-> **⚠️ Important:** JSON doesn't support comments! Examples above are **ready to copy** without modifications.
+---
 
-#### Step 3: Verify Data Isolation
+### **Step 8: Monitor Logs for Tenant2 (Same Process, Same Topic)**
+
 ```bash
-# Check tenant1 data
-curl http://localhost:8181/v1/data/acl/tenant1 | jq .
+# Watch OPAL Server publish tenant2 to the SAME topic
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_server --since=30s | grep -E "(Publishing|tenant2)"
 
-# Check tenant2 data  
-curl http://localhost:8181/v1/data/acl/tenant2 | jq .
+# Watch OPAL Client fetch tenant2 data
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_client --since=30s | grep -E "(tenant2|success)"
+```
 
-# Check all data
+**Expected Output:**
+```
+opal_server | Publishing data update to topics: {'tenant_data'}, reason: Load tenant2 data via single topic - NO RESTART!
+opal_client | Fetching data from: http://example_external_data_provider:80/acl/tenant2
+opal_client | processing store transaction: {'success': True, ...}
+```
+
+🎯 **Same topic `tenant_data` handled both tenants - NO RESTART REQUIRED!**
+
+---
+
+### **Step 9: Verify Both Tenants with Full Isolation**
+
+```bash
+# Check complete data isolation - both tenants should be present
 curl http://localhost:8181/v1/data/acl | jq .
 ```
 
-#### Step 4: Test Policies with New Syntax
+**Expected Output:**
+```json
+{
+  "result": {
+    "tenant1": {
+      "users": [{"name": "alice", "role": "admin"}, {"name": "bob", "role": "user"}],
+      "resources": [{"name": "document1", "owner": "alice"}, {"name": "document2", "owner": "bob"}]
+    },
+    "tenant2": {
+      "users": [{"name": "charlie", "role": "manager"}, {"name": "diana", "role": "user"}],
+      "resources": [{"name": "file1", "owner": "charlie"}, {"name": "file2", "owner": "diana"}]
+    }
+  }
+}
+```
+
+🎯 **SUCCESS! Both tenants loaded via single topic with perfect isolation and complete state!**
+
+---
+
+### **Step 10: Test Authorization Policies**
 
 ```bash
-# Test tenant-based RBAC authorization
+# Test tenant1 authorization
 curl -X POST http://localhost:8181/v1/data/policies/rbac/allow \
   -H "Content-Type: application/json" \
   -d '{
@@ -479,73 +628,133 @@ curl -X POST http://localhost:8181/v1/data/policies/rbac/allow \
       "tenant_id": "tenant1"
     }
   }' | jq .
+
+# Test cross-tenant isolation (alice cannot access tenant2)
+curl -X POST http://localhost:8181/v1/data/policies/rbac/allow \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "user": "alice",
+      "action": "read", 
+      "resource": "file1", 
+      "tenant_id": "tenant2"
+    }
+  }' | jq .
 ```
 
-### 🔧 Architecture
+**Expected Results:**
+- **Tenant1 access**: `{"result": true}` ✅ 
+- **Cross-tenant access**: `{"result": false}` ✅ (Properly isolated)
 
-The solution uses:
-- **OPAL Server** (port 7002) - Central policy/data management
-- **OPAL Client** (port 7001) - Fetches and updates OPA
-- **OPA** (ports 8181, 8282) - Policy engine with modern Rego policies
-- **Example External Data Provider** (port 8090) - Mock tenant data endpoints
+---
 
-### 📋 Requirements
+### **Step 11: Live Data Updates (Real-time Changes)**
 
-- **Docker**: >= 20.10
-- **Docker Compose**: >= 2.0  
-- **System**: Linux/macOS (ARM64/AMD64)
-- **RAM**: Minimum 2GB available memory
-- **Ports**: 7001, 7002, 8090, 8181, 8282
+Now let's demonstrate the second revolutionary aspect: **updating existing tenant data without restart**!
 
-### 🛠️ Troubleshooting
-
-**JSON Comments Error:**
 ```bash
-# ❌ Wrong: JSON doesn't support comments
-curl -X POST http://localhost:7002/data/config \
-  -d '{"url": "http://example_external_data_provider:80/acl/tenant2"}' # Comment causes error!
-
-# ✅ Correct: Pure JSON without comments  
+# Trigger live data refresh for tenant1 - simulating external system change
 curl -X POST http://localhost:7002/data/config \
   -H "Content-Type: application/json" \
-  -d '{"entries": [{"url": "http://example_external_data_provider:80/acl/tenant2", "topics": ["tenant_data"], "dst_path": "/acl/tenant2"}]}'
+  -d '{
+    "entries": [{
+      "url": "http://example_external_data_provider:80/acl/tenant1",
+      "topics": ["tenant_data"],
+      "dst_path": "/acl/tenant1",
+      "config": {
+        "tenant_id": "tenant1",
+        "action": "update",
+        "change_type": "live_refresh",
+        "timestamp": "2025-01-18T12:00:00.000000"
+      }
+    }],
+    "reason": "Live data refresh for tenant1 - demonstrating real-time updates"
+  }'
 ```
 
-**Important:**
-- Always use `http://example_external_data_provider:80` for container-to-container communication
-- Never use `http://host.docker.internal:8090` - doesn't work with OPAL Client  
-- Always add `Content-Type: application/json` header
+**Expected Output:**
+```json
+{"status":"ok"}
+```
 
-#### **Container Startup Issues**
+---
+
+### **Step 12: Monitor Live Update Logs**
+
 ```bash
-# Navigate to docker directory first
-cd docker
+# Watch OPAL Server handle live update
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_server --since=30s | grep -E "(Publishing|Live data refresh)"
 
-# Check logs
-docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_server
-docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_client
-
-# Restart system
-docker compose -f docker-compose-single-topic-multi-tenant.yml down && docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
+# Watch OPAL Client process live update
+docker compose -f docker-compose-single-topic-multi-tenant.yml logs opal_client --since=30s | grep -E "(Received|Fetching|Live data|success)"
 ```
 
-#### **Data Not Loading to OPA**
+**Expected Output:**
+```
+opal_server | Publishing data update to topics: {'tenant_data'}, reason: Live data refresh for tenant1 - demonstrating real-time updates
+opal_client | Received event on topic: tenant_data
+opal_client | Fetching data from: http://example_external_data_provider:80/acl/tenant1
+opal_client | processing store transaction: {'success': True, ...}
+```
+
+🎯 **This proves the system handles live updates using the same single topic architecture!**
+
+---
+
+### **Step 13: Verify Live Data Synchronization**
+
 ```bash
-# Check if API Provider responds
-curl -v http://localhost:8090/acl/tenant1
-
-# Check OPAL Client logs
-docker logs opa-zero-poll-single-topic-multi-tenant-opal-client-1
+# Verify data is refreshed in OPA (same content, but freshly fetched)
+curl http://localhost:8181/v1/data/acl/tenant1 | jq .
 ```
 
-#### **Content-Type Error**
-Ensure nginx returns `Content-Type: application/json`:
-```nginx
-location /acl/tenant1 {
-    default_type application/json;  # ✅ Correct
-    # add_header Content-Type application/json;  # ❌ Wrong
+**Expected Output:**
+```json
+{
+  "result": {
+    "users": [
+      {"name": "alice", "role": "admin"},
+      {"name": "bob", "role": "user"}
+    ],
+    "resources": [
+      {"name": "document1", "owner": "alice"},
+      {"name": "document2", "owner": "bob"}
+    ]
+  }
 }
 ```
+
+🎯 **SUCCESS! Data refreshed in real-time without any system restart!**
+
+---
+
+## 🎉 **Complete Demonstration Finished!**
+
+### **What We Proved:**
+
+1. ✅ **Zero Restart for New Tenants**: Added tenant2 without restarting any services
+2. ✅ **Zero Restart for Data Updates**: Refreshed tenant1 data without restarting any services  
+3. ✅ **Single Topic Architecture**: All operations use the same `tenant_data` topic
+4. ✅ **Real-time Synchronization**: Changes are immediately visible in OPA
+5. ✅ **Perfect Isolation**: Tenants have separate data spaces
+6. ✅ **Live Monitoring**: Full visibility into all processes via logs
+
+### **Key Architectural Insights:**
+
+> **💡 Revolutionary Discovery:** Each tenant has:
+> - **Different source URL** (`/acl/tenant1` vs `/acl/tenant2`)
+> - **Same topic** (`tenant_data`) 📡
+> - **Different destination paths** in OPA (`/acl/tenant1` vs `/acl/tenant2`)
+
+This eliminates the traditional need for:
+- ❌ Separate topics per tenant  
+- ❌ System restarts when adding new tenants
+- ❌ System restarts when updating existing tenant data
+- ❌ Complex topic management at scale
+- ❌ Downtime for any data synchronization operations
+
+
+
 
 ### 🔗 Useful Links
 

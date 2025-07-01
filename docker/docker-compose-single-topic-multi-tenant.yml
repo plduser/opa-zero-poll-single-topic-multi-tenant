@@ -195,11 +195,43 @@ services:
 #        }
 #      }' | jq .
 #
+# 8. LIVE DATA UPDATES - Update existing tenant data without restart:
+#    curl -X POST http://localhost:7002/data/config \
+#      -H "Content-Type: application/json" \
+#      -d '{
+#        "entries": [{
+#          "url": "http://example_external_data_provider:80/acl/tenant1",
+#          "topics": ["tenant_data"],
+#          "dst_path": "/acl/tenant1",
+#          "config": {
+#            "tenant_id": "tenant1",
+#            "action": "update",
+#            "change_type": "live_refresh",
+#            "timestamp": "2025-01-18T12:00:00.000000"
+#          }
+#        }],
+#        "reason": "Live data refresh for tenant1 - demonstrating real-time updates"
+#      }'
+#
+# 9. Monitor live update logs (same monitoring as step 5):
+#    # OPAL Server will show:
+#    # - "Publishing data update to topics: {'tenant_data'}, reason: Live data refresh..."
+#    # 
+#    # OPAL Client will show:
+#    # - "Received event on topic: tenant_data"
+#    # - "Fetching data from: http://example_external_data_provider:80/acl/tenant1"
+#    # - "processing store transaction: {'success': True, ...}"
+#
+# 10. Verify live data synchronization:
+#     curl -s http://localhost:8181/v1/data/acl/tenant1 | jq .
+#
 # Key Benefits Demonstrated:
 # - ✅ Single topic 'tenant_data' handles unlimited tenants
 # - ✅ Zero downtime when adding new tenants  
-# - ✅ Full data isolation through OPA path hierarchy (/acl/tenant1, /acl/tenant2)
-# - ✅ Linear scalability - O(1) topics instead of O(N)
+# - ✅ Zero downtime when updating existing tenant data
+# - ✅ Real-time data synchronization across all tenants
+# - ✅ Perfect tenant isolation through OPA path hierarchy (/acl/tenant1, /acl/tenant2)
+# - ✅ Linear scalability: O(1) topics, O(N) tenants
 # - ✅ Simplified configuration management
 # - ✅ Real-time tenant provisioning
 #
