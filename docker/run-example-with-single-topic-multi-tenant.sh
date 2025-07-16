@@ -88,16 +88,25 @@ verify_opa_data() {
     local tenant=$1
     print_status "Verifying data for $tenant in OPA..."
     
-    local response=$(curl -s "http://localhost:8181/v1/data/acl/$tenant" 2>/dev/null)
+    local max_attempts=10
+    local attempt=1
     
-    if echo "$response" | jq -e '.result.users' > /dev/null 2>&1; then
-        print_success "Data for $tenant found in OPA"
-        echo "$response" | jq '.result.users'
-        return 0
-    else
-        print_error "No data found for $tenant in OPA"
-        return 1
-    fi
+    while [ $attempt -le $max_attempts ]; do
+        local response=$(curl -s "http://localhost:8181/v1/data/acl/$tenant" 2>/dev/null)
+        
+        if echo "$response" | jq -e '.result.users' > /dev/null 2>&1; then
+            print_success "Data for $tenant found in OPA"
+            echo "$response" | jq '.result.users'
+            return 0
+        fi
+        
+        echo -n "."
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+    
+    print_error "No data found for $tenant in OPA after $((max_attempts * 2)) seconds"
+    return 1
 }
 
 # Main test execution
@@ -139,7 +148,7 @@ main() {
     
     if [ $? -eq 0 ]; then
         print_success "Tenant1 data source added successfully"
-        sleep 5
+        sleep 15
         verify_opa_data "tenant1"
     else
         print_error "Failed to add tenant1 data source"
@@ -161,7 +170,7 @@ main() {
     
     if [ $? -eq 0 ]; then
         print_success "Tenant2 data source added successfully - NO RESTART NEEDED!"
-        sleep 5
+        sleep 10
         verify_opa_data "tenant2"
     else
         print_error "Failed to add tenant2 data source"

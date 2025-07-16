@@ -6,7 +6,17 @@
 
 ---
 
-## 🚀 Revolutionary Multi-Tenancy Approach for OPAL
+## 🏆 SUCCESS STORY - MERGED INTO MAIN OPAL PROJECT! 
+
+**🎉 BREAKING NEWS:** This single-topic multi-tenant solution has been **successfully merged into the official OPAL project!** 
+
+What started as an experimental approach to eliminate restart requirements for multi-tenant OPAL deployments has now become an **officially recognized pattern** in the OPAL ecosystem. The solution demonstrates that **innovation and practical engineering** can solve real-world scalability challenges.
+
+**🔗 Find the official version in:** [OPAL Examples Repository](https://github.com/permitio/opal-example-policy-repo/tree/master/single-topic-multi-tenant)
+
+---
+
+## 🚀 Multi-Tenancy Approach for OPAL
 
 This repository contains a **breakthrough solution** for multi-tenancy in OPAL designed for **high-scale SaaS applications** that **eliminates both the need for system restarts and the complexity of incremental updates (PATCH operations)** when adding new tenants.
 
@@ -358,6 +368,8 @@ chmod +x run-example-with-single-topic-multi-tenant.sh
 
 ### 🔧 Configuration
 
+**Note:** This local configuration file has been updated to point to the **official OPAL examples repository** where the single-topic multi-tenant solution has been merged!
+
 #### Key Parameters in docker/docker-compose-single-topic-multi-tenant.yml:
 
 ```yaml
@@ -417,7 +429,7 @@ cd docker
 ### **Step 1: Start All Services**
 
 ```bash
-# Start all containers
+# Start all containers (configured to use official OPAL examples repository)
 docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
 
 # Wait for services to be ready (30-60 seconds)
@@ -765,7 +777,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**🌟 If this solution solves your multi-tenancy problem in OPAL, consider supporting pull request to the main OPAL project!**
+**🌟 This solution has been successfully merged into the main OPAL project! 🎉 Check out the official OPAL examples repository for the latest version.**
 
 ## 📖 Documentation in Other Languages
 

@@ -26,18 +26,15 @@ services:
       # number of uvicorn workers to run inside the opal-server container
       - UVICORN_NUM_WORKERS=4
       
-      # Policy repository configuration - using GitHub for reliable policy sync
-      # This is the RECOMMENDED approach for OPAL demonstrations as it ensures:
-      # - Reliable policy loading and sync mechanism
-      # - Real-time policy updates via OPAL's designed workflow  
-      # - Consistent behavior across different environments
-      # The repo demonstrates single-topic multi-tenant approach
-      - OPAL_POLICY_REPO_URL=https://github.com/plduser/opa-zero-poll-single-topic-multi-tenant.git
-      - OPAL_POLICY_REPO_MAIN_BRANCH=main
+      # Policy repository configuration - using OFFICIAL OPAL example repository
+      # This points to the OFFICIAL opal-example-policy-repo where single-topic solution was merged
+      # Testing if the solution works with the official repository
+      - OPAL_POLICY_REPO_URL=https://github.com/permitio/opal-example-policy-repo.git
+      - OPAL_POLICY_REPO_MAIN_BRANCH=master
       # Polling interval for policy updates (30 seconds for demo, use webhooks in production)
       - OPAL_POLICY_REPO_POLLING_INTERVAL=30
       - OPAL_POLICY_REPO_SSH_KEY=""
-      - OPAL_POLICY_REPO_PATH=docker/docker_files/policies
+      - OPAL_POLICY_REPO_PATH=single-topic-multi-tenant
       
       # Data sources configuration - using single topic approach
       # Initially empty - tenants will be added dynamically via API
@@ -67,9 +64,6 @@ services:
       - OPAL_LOG_FORMAT_INCLUDE_PID=true
       - OPAL_INLINE_OPA_LOG_FORMAT=http
       
-      # OPA configuration
-      - OPAL_POLICY_STORE_URL=http://opa:8181
-      
       # REVOLUTIONARY SINGLE TOPIC CONFIGURATION
       # Traditional approach: OPAL_DATA_TOPICS=tenant_1_data,tenant_2_data,tenant_3_data (requires restart)
       # Our breakthrough: OPAL_DATA_TOPICS=tenant_data (NO restart needed!)
@@ -88,29 +82,15 @@ services:
     ports:
       # exposes opal client on the host machine, you can access the client at: http://localhost:7001
       - "7001:7000"
-    depends_on:
-      - opal_server
-      - opa
-    # this command is not necessary when deploying OPAL for real, it is simply a trick for dev environments
-    # to make sure that opal-server is already up before starting the client.
-    command: sh -c "exec ./wait-for.sh opal_server:7002 --timeout=20 -- ./start.sh"
-
-  # Open Policy Agent - policy engine
-  # Handles tenant data isolation through path hierarchy
-  opa:
-    image: openpolicyagent/opa:latest
-    ports:
-      # exposes the OPA agent on the host machine
+      # exposes the OPA agent (being run by OPAL) on the host machine
       # you can access the OPA api that you know and love at: http://localhost:8181
       # OPA api docs are at: https://www.openpolicyagent.org/docs/latest/rest-api/
       - "8181:8181"
-      # diagnostic port for health checks and metrics
-      - "8282:8282"
-    command:
-      - "run"
-      - "--server"
-      - "--addr=0.0.0.0:8181"
-      - "--diagnostic-addr=0.0.0.0:8282"
+    depends_on:
+      - opal_server
+    # this command is not necessary when deploying OPAL for real, it is simply a trick for dev environments
+    # to make sure that opal-server is already up before starting the client.
+    command: sh -c "exec ./wait-for.sh opal_server:7002 --timeout=20 -- ./start.sh"
 
   # Example External Data Provider - serves tenant-specific data
   # Renamed from 'simple-api-provider' to follow OPAL naming conventions

@@ -6,6 +6,16 @@
 
 ---
 
+## 🏆 SUCCESS STORY - ZMERGOWANE DO GŁÓWNEGO PROJEKTU OPAL! 
+
+**🎉 PRZEŁOMOWA WIADOMOŚĆ:** To rewolucyjne rozwiązanie single-topic multi-tenant zostało **pomyślnie zmergowane do oficjalnego projektu OPAL!** 
+
+To, co rozpoczęło się jako eksperymentalne podejście do eliminacji wymagań restartu w wielodostępnych wdrożeniach OPAL, stało się teraz **oficjalnie uznanym wzorcem** w ekosystemie OPAL. Rozwiązanie pokazuje, że **innowacyjność i praktyczna inżynieria** mogą rozwiązać rzeczywiste wyzwania skalowalności.
+
+**🔗 Znajdź oficjalną wersję w:** [Repozytorium Przykładów OPAL](https://github.com/permitio/opal-example-policy-repo/tree/master/single-topic-multi-tenant)
+
+---
+
 ## 🚀 Rewolucyjne podejście do wielodostępności w OPAL
 
 To repozytorium zawiera **rozwiązanie** problemu wielodostępności (multi-tenancy) w OPAL dla **wysokoskalowalnych aplikacji SaaS**, które eliminuje zarówno potrzebę restartowania systemu, jak i złożoność inkrementalnych aktualizacji (PATCH operations) przy dodawaniu nowych tenantów.
@@ -468,7 +478,7 @@ cd docker
 ### **Krok 1: Uruchomienie wszystkich usług**
 
 ```bash
-# Uruchomienie wszystkich kontenerów
+# Uruchomienie wszystkich kontenerów (skonfigurowanych do użycia oficjalnego repo przykładów OPAL)
 docker compose -f docker-compose-single-topic-multi-tenant.yml up -d
 
 # Oczekiwanie na gotowość usług (30-60 sekund)
@@ -813,6 +823,8 @@ chmod +x run-example-with-single-topic-multi-tenant.sh
 
 ## 🔧 Konfiguracja
 
+**Uwaga:** Ten lokalny plik konfiguracyjny został zaktualizowany, aby wskazywał na **oficjalne repozytorium przykładów OPAL**, gdzie rozwiązanie single-topic multi-tenant zostało zmergowane!
+
 ### Kluczowe parametry w docker/docker-compose-single-topic-multi-tenant.yml:
 
 ```yaml
@@ -932,7 +944,7 @@ MIT License - zobacz [LICENSE](LICENSE) dla szczegółów.
 
 ---
 
-**🌟 Jeśli to rozwiązanie rozwiązuje Twój problem z multi-tenancy w OPAL, rozważ wspieranie pull request do głównego projektu OPAL!**
+**🌟 To rozwiązanie zostało pomyślnie zmergowane do głównego projektu OPAL! 🎉 Sprawdź oficjalne repozytorium przykładów OPAL, aby zobaczyć najnowszą wersję.**
 
 ## 📖 Dokumentacja w innych językach
 
